@@ -8,7 +8,7 @@ env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: backend-users
   ECS_CLUSTER: devops-eval3-cluster
-  ECS_SERVICE: backend-users-service
+  ECS_SERVICE: backend-users-service-kmmova6k
   CONTAINER_NAME: backend-users
 
 jobs:
