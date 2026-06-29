@@ -1,29 +1,28 @@
-# Backend 1 - User Service
+# Backend Users Service — Node.js
 
-Backend en Node.js (JavaScript) para gestión de usuarios con base de datos MySQL.
+Servicio REST para la gestión de usuarios, desarrollado con Node.js y Express. Forma parte del proyecto **Innovatech Chile** desplegado en AWS ECS.
 
-## Características
+## Tecnologías
 
-- API REST para gestión de usuarios
-- Registro de usuarios con validación
-- Base de datos MySQL
-- Configuración vía archivo .env
+- **Runtime:** Node.js 18
+- **Framework:** Express 4
+- **Base de datos:** MySQL 8.0
+- **Contenedor:** Docker (imagen base `node:18-alpine`)
+- **CI/CD:** GitHub Actions → Amazon ECR → Amazon ECS
 
-## Requisitos
+## Endpoints
 
-- Node.js 18 o superior
-- MySQL 8.0 o superior
-- npm
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/api/users/register` | Registrar nuevo usuario |
+| GET | `/api/users` | Obtener todos los usuarios |
+| GET | `/api/users/:id` | Obtener usuario por ID |
+| GET | `/api/users/username/:username` | Obtener usuario por username |
+| DELETE | `/api/users/:id` | Eliminar usuario |
 
-## Configuración
+## Variables de entorno
 
-1. Copiar el archivo de ejemplo:
-```bash
-cp .env.example .env
-```
-
-2. Editar `.env` con sus credenciales de MySQL:
-```
+```env
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
@@ -32,48 +31,43 @@ DB_NAME=users_db
 PORT=8081
 ```
 
-3. Crear la base de datos en MySQL:
-```sql
-CREATE DATABASE users_db;
-```
-
-## Instalación
+## Ejecución local (sin Docker)
 
 ```bash
 npm install
+cp .env.example .env
+# edita .env con tus credenciales
+node server.js
 ```
 
-## Ejecutar
+## Ejecución con Docker
 
 ```bash
-npm start
+docker build -t backend-users .
+docker run -p 8081:8081 --env-file .env backend-users
 ```
 
-Para desarrollo con auto-reload:
+## Ejecución completa con Docker Compose
+
+Desde la carpeta raíz del proyecto:
+
 ```bash
-npm run dev
+docker-compose up --build
 ```
 
-El servidor iniciará en el puerto 8081.
+El servicio estará disponible en `http://localhost:8081`
 
-## Endpoints
+## Pipeline CI/CD
 
-- `POST /api/users/register` - Registrar nuevo usuario
-- `GET /api/users` - Obtener todos los usuarios
-- `GET /api/users/{id}` - Obtener usuario por ID
-- `GET /api/users/username/{username}` - Obtener usuario por username
-- `DELETE /api/users/{id}` - Eliminar usuario
+Cada `push` a la rama `main` dispara el workflow `.github/workflows/deploy.yml` que:
 
-## Ejemplo de Uso
+1. **Test** — ejecuta las pruebas disponibles
+2. **Build** — construye la imagen Docker
+3. **Push** — publica la imagen en Amazon ECR con tag del commit
+4. **Deploy** — actualiza el servicio en Amazon ECS Fargate
 
-Registrar usuario:
-```bash
-curl -X POST http://localhost:8081/api/users/register \
-  -H "Content-Type: application/json" \
-  -d '{"username":"juan","email":"juan@example.com","password":"123456"}'
-```
+Los secretos de AWS y base de datos se gestionan mediante **GitHub Secrets**, sin exposición en el código.
 
-Obtener usuarios:
-```bash
-curl http://localhost:8081/api/users
-```
+## Arquitectura en la nube
+
+El servicio corre en **Amazon ECS Fargate** dentro de una VPC privada, detrás de un **Application Load Balancer** en el puerto 8081. Los logs se envían automáticamente a **Amazon CloudWatch** en el grupo `/ecs/backend-users`.
